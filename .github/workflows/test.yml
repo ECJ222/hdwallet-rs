@@ -14,20 +14,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout sources
-    - uses: actions/checkout@v3
+      - name: Checkout sources
+      - uses: actions/checkout@v3
 
-    - name: Run tests
-      run: cargo test --verbose
+      - name: Run tests
+        run: cargo test --verbose
  
   lint:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout sources
-    - uses: actions/checkout@v3
+      - name: Checkout sources
+      - uses: actions/checkout@v3
     
-    - name: Run lints
-      run: cargo fmt -- --check
+      - name: Run lints
+        run: cargo fmt -- --check
       
-    - name: Run clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
