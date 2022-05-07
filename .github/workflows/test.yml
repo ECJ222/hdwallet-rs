@@ -26,8 +26,8 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
     
-      - name: Run lints
+      - name: cargo fmt
         run: cargo fmt -- --check
       
-      - name: Run clippy
+      - name: cargo clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
