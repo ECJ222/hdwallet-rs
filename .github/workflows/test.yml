@@ -10,21 +10,21 @@ on:
       
 jobs:
   unit:
-    name: unit tests
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout sources
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
 
       - name: Run tests
         run: cargo test --verbose
  
   lint:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout sources
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
     
       - name: Run lints
         run: cargo fmt -- --check
