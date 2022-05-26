@@ -1,5 +1,5 @@
 use bip0039::{Count, Language, Mnemonic};
-use super::error::Error;
+use crate::error::Error;
 
 /// Generate mnemonic.
 pub fn new_mnemonic(length: u32, language_of_choice: &str) -> Result<Mnemonic, Error> {
