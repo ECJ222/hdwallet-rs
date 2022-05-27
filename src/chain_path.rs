@@ -13,24 +13,6 @@ pub enum Error {
     KeyIndexOutOfRange,
 }
 
-/// ChainPath is used to describe BIP-32 KeyChain path.
-///
-/// # Examples
-///
-/// ``` rust
-/// # extern crate hdwallet;
-/// use hdwallet::{ChainPath, SubPath, KeyIndex};
-///
-/// let chain_path = ChainPath::from("m/2147483649H/1".to_string())
-///     .iter()
-///     .collect::<Result<Vec<_>, _>>()
-///     .unwrap();
-/// assert_eq!(chain_path, vec![
-///     SubPath::Root,
-///     SubPath::Child(KeyIndex::hardened_from_normalize_index(1).unwrap()),
-///     SubPath::Child(KeyIndex::Normal(1))
-/// ]);
-/// ```
 #[derive(Debug, PartialEq, Eq)]
 pub struct ChainPath<'a> {
     path: Cow<'a, str>

@@ -8,8 +8,6 @@ use crate::{
 };
 use key_chain::Derivation;
 
-// &Serialize::<String>::serialize(&priv_key)
-
 use base58::{FromBase58, ToBase58};
 
 use std::rc::Rc;
@@ -211,25 +209,45 @@ impl Deserialize<String, Error> for PubKey {
     }
 }
 
-/*
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mnemonic;
+    use crate::{traits::Serialize};
+    use key_chain::{DefaultKeyChain, KeyChain};
 
-Create a CLI based HD wallet that supports Bitcoin, Solana, Ethereum and Polkadot
+    #[test]
+    fn test_deserialize_priv_key() {
+        let new_mnemonic = mnemonic::new_mnemonic(24, "English");
+        let seed = mnemonic::new_seed(new_mnemonic.unwrap(), "".to_string());
+        let key_chain =
+            DefaultKeyChain::new(SolanaExPrivateKey::new_master_key(&seed).expect("master key"));
+        let (extended_key, derivation) =
+            key_chain.derive_private_key("m".into()).expect("fetch key");
+        let key = PrivKey {
+            derivation,
+            extended_key,
+        };
+        let serialized_key: String = key.serialize();
+        let key2 = PrivKey::deserialize(serialized_key).expect("deserialize");
+        assert_eq!(key, key2);
+    }
 
-Check this repo's for inspiration
-
-CLI -> https://github.com/AleoHQ/wagyu/blob/master/ethereum/src/public_key.rs
-HD WALLET -> https://github.com/jjyr/hdwallet/tree/master/src
-
-CRYPTO INFORMATION [
-  http://ethanfast.com/top-crypto.html,
-  https://github.com/BL0CK-X/blockchain-api,
-  https://docs.rs/ed25519/latest/ed25519/,
-  https://github.com/ethereumjs/ethereumjs-util/blob/ebf40a0fba8b00ba9acae58405bca4415e383a0d/src/account.ts,
-  https://github.com/satoshilabs/slips/blob/master/slip-0044.md,
-  https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md,
-  https://arshbot.medium.com/so-you-want-to-build-an-ethereum-hd-wallet-cb2b7d7e4998
-  https://github.com/jjyr/hdwallet/tree/master/src,
-  https://learnmeabitcoin.com/technical/base58
-]
-
-*/
+    #[test]
+    fn test_deserialize_pub_key() {
+        let new_mnemonic = mnemonic::new_mnemonic(24, "English");
+        let seed = mnemonic::new_seed(new_mnemonic.unwrap(), "".to_string());
+        let key_chain =
+            DefaultKeyChain::new(SolanaExPrivateKey::new_master_key(&seed).expect("master key"));
+        let (extended_key, derivation) =
+            key_chain.derive_private_key("m".into()).expect("fetch key");
+        let key = PrivKey {
+            derivation,
+            extended_key,
+        };
+        let key = PubKey::from_private_key(&key);
+        let serialized_key: String = key.serialize();
+        let key2 = PubKey::deserialize(serialized_key).expect("deserialize");
+        assert_eq!(key, key2);
+    }
+}
