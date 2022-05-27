@@ -124,8 +124,7 @@ impl Serialize<Vec<u8>> for SolanaExPublicKey {
 
 impl Deserialize<&[u8], Error> for SolanaExPublicKey {
     fn deserialize(data: &[u8]) -> Result<Self, Error> {
-        let private_key = Sk::from_bytes(&data[..33])?;
-        let public_key = Pk::from(&private_key);
+        let public_key = Pk::from_bytes(&data[..32]).unwrap();
         
         Ok(SolanaExPublicKey(public_key))
     }

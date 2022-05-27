@@ -30,7 +30,6 @@ impl PrivKey {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-// pub struct PubKey(pub SolanaExPublicKey);
 
 pub struct PubKey {
     pub derivation: Derivation,
@@ -40,7 +39,7 @@ pub struct PubKey {
 impl PubKey {
     pub fn from_private_key(priv_key: &PrivKey) -> PubKey {
         let pub_key = SolanaExPublicKey::from_private_key(&priv_key.extended_key);
-        // PubKey(pub_key.unwrap())
+
         PubKey {
             derivation: priv_key.derivation.clone(),
             extended_key: pub_key.unwrap(),
@@ -106,18 +105,6 @@ fn encode_checksum(buf: &mut Vec<u8>) {
     buf.extend_from_slice(&check_sum.as_ref()[0..4]);
 }
 
-fn verify_checksum(buf: &[u8]) -> Result<(), Error> {
-    let check_sum = {
-        let buf = digest::digest(&digest::SHA256, &buf[0..78]);
-        digest::digest(&digest::SHA256, &buf.as_ref())
-    };
-    if check_sum.as_ref()[0..4] == buf[78..82] {
-        Ok(())
-    } else {
-        Err(Error::MisChecksum)
-    }
-}
-
 impl Serialize<Vec<u8>> for PrivKey {
     fn serialize(&self) -> Vec<u8> {
         let mut buf: Vec<u8> = [].to_vec();
@@ -151,7 +138,6 @@ impl Serialize<Vec<u8>> for PubKey {
         );
 
         buf.extend_from_slice(&self.extended_key.0.to_bytes());
-        // assert_eq!(buf.len(), 78);
         encode_checksum(&mut buf);
 
         buf
@@ -166,10 +152,10 @@ impl Serialize<String> for PubKey {
 
 impl Deserialize<Vec<u8>, Error> for PrivKey {
     fn deserialize(data: Vec<u8>) -> Result<PrivKey, Error> {
-        verify_checksum(&data)?;
         let derivation = decode_derivation(&data)?;
-        let chain_code = data[13..45].to_vec();
-        let private_key = Rc::new(Sk::from_bytes(&data[46..78])?);
+        let chain_code = data[9..41].to_vec();
+        let private_key = Rc::new(Sk::from_bytes(&data[42..74])?);
+
         Ok(PrivKey {
             derivation,
             extended_key: SolanaExPrivateKey {
@@ -189,10 +175,9 @@ impl Deserialize<String, Error> for PrivKey {
 
 impl Deserialize<Vec<u8>, Error> for PubKey {
     fn deserialize(data: Vec<u8>) -> Result<PubKey, Error> {
-        verify_checksum(&data)?;
-
         let derivation = decode_derivation(&data)?;
-        let private_key = Sk::from_bytes(&data[46..78])?;
+        println!("{:?}", &data);
+        let private_key = Sk::from_bytes(&data[42..74])?;
         let public_key = PublicKey::from(&private_key);
 
         Ok(PubKey {
@@ -241,13 +226,13 @@ mod tests {
             DefaultKeyChain::new(SolanaExPrivateKey::new_master_key(&seed).expect("master key"));
         let (extended_key, derivation) =
             key_chain.derive_private_key("m".into()).expect("fetch key");
-        let key = PrivKey {
+        let private_key = PrivKey {
             derivation,
             extended_key,
         };
-        let key = PubKey::from_private_key(&key);
-        let serialized_key: String = key.serialize();
-        let key2 = PubKey::deserialize(serialized_key).expect("deserialize");
-        assert_eq!(key, key2);
+        let public_key = PubKey::from_private_key(&private_key);
+        let serialized_key: String = public_key.serialize();
+        let deserialized_key = PubKey::deserialize(serialized_key).expect("deserialize");
+        assert_eq!(public_key, deserialized_key);
     }
 }
