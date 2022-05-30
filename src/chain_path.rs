@@ -13,7 +13,7 @@ pub enum Error {
     KeyIndexOutOfRange,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChainPath<'a> {
     path: Cow<'a, str>
 }
