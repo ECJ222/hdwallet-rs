@@ -2,17 +2,19 @@ pub mod key_chain;
 
 use crate::ring::digest;
 use crate::{
+    chain_path::ChainPath,
     ed25519_dalek::{PublicKey, SecretKey as Sk},
     traits::{Deserialize, Serialize},
-    KeyIndex, SolanaExPrivateKey, SolanaExPublicKey,
+    SolanaExPrivateKey, SolanaExPublicKey,
 };
-use key_chain::Derivation;
+use key_chain::{Derivation, KeyChain};
 
 use base58::{FromBase58, ToBase58};
 
 use std::rc::Rc;
 
 use crate::error::Error;
+
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PrivKey {
@@ -66,34 +68,31 @@ impl DerivationExt for Derivation {
 
 fn encode_derivation(buf: &mut Vec<u8>, derivation: &Derivation) {
     buf.extend_from_slice(&derivation.depth.to_be_bytes());
+    println!("{:?}", buf);
     buf.extend_from_slice(&derivation.parent_fingerprint());
+    println!("\n\n\n {:?}", buf);
     match derivation.key_index {
         Some(key_index) => {
             buf.extend_from_slice(&key_index.raw_index().to_be_bytes());
         }
         None => buf.extend_from_slice(&[0; 4]),
     }
+
+    println!("\n\n\n {:?}", buf);
 }
 
-fn decode_derivation(buf: &[u8]) -> Result<Derivation, Error> {
-    let depth = u8::from_be_bytes([buf[4]; 1]);
-    let parent_fingerprint = &buf[5..=8];
-    let key_index = {
-        // is master key
-        if parent_fingerprint == [0; 4] {
-            None
-        } else {
-            let mut key_index_buf = [0u8; 4];
-            key_index_buf.copy_from_slice(&buf[9..=12]);
-            let raw_index = u32::from_be_bytes(key_index_buf);
-            Some(KeyIndex::from(raw_index))
-        }
-    };
-    Ok(Derivation {
-        depth,
-        parent_key: None,
-        key_index,
-    })
+fn decode_derivation(data: (&[u8], &dyn KeyChain, ChainPath)) -> Result<Derivation, Error> {
+    let slice: String = data.2.to_string();
+    println!("{}", &slice[..(slice.len())]);
+    let chain_path = &slice[..(slice.len())];
+    let (_extended_key, derivation) = data
+        .1
+        .derive_private_key(chain_path.into())
+        .expect("fetch key");
+
+    println!("{:?} \n\n", derivation);
+
+    Ok(derivation)
 }
 
 fn encode_checksum(buf: &mut Vec<u8>) {
@@ -132,10 +131,9 @@ impl Serialize<Vec<u8>> for PubKey {
     fn serialize(&self) -> Vec<u8> {
         let mut buf: Vec<u8> = [].to_vec();
 
-        encode_derivation(
-            &mut buf,
-            &self.derivation,
-        );
+        println!("here");
+
+        encode_derivation(&mut buf, &self.derivation);
 
         buf.extend_from_slice(&self.extended_key.0.to_bytes());
         encode_checksum(&mut buf);
@@ -146,15 +144,20 @@ impl Serialize<Vec<u8>> for PubKey {
 
 impl Serialize<String> for PubKey {
     fn serialize(&self) -> String {
-        Serialize::<Vec<u8>>::serialize(&self.extended_key).to_base58()
+        let serialized_key: Vec<u8> = self.serialize();
+        let public_address = Serialize::<Vec<u8>>::serialize(&self.extended_key).to_base58();
+
+        public_address + &serialized_key.to_base58()
     }
 }
 
-impl Deserialize<Vec<u8>, Error> for PrivKey {
-    fn deserialize(data: Vec<u8>) -> Result<PrivKey, Error> {
-        let derivation = decode_derivation(&data)?;
-        let chain_code = data[9..41].to_vec();
-        let private_key = Rc::new(Sk::from_bytes(&data[42..74])?);
+impl Deserialize<(String, &dyn KeyChain, ChainPath<'_>), Error> for PrivKey {
+    fn deserialize(data: (String, &dyn KeyChain, ChainPath)) -> Result<PrivKey, Error> {
+        let buf = data.0.from_base58().map_err(|_| Error::InvalidBase58)?;
+
+        let derivation = decode_derivation((&buf, data.1, data.2))?;
+        let chain_code = buf[9..41].to_vec();
+        let private_key = Rc::new(Sk::from_bytes(&buf[42..74])?);
 
         Ok(PrivKey {
             derivation,
@@ -166,19 +169,15 @@ impl Deserialize<Vec<u8>, Error> for PrivKey {
     }
 }
 
-impl Deserialize<String, Error> for PrivKey {
-    fn deserialize(data: String) -> Result<PrivKey, Error> {
-        let data = data.from_base58().map_err(|_| Error::InvalidBase58)?;
-        PrivKey::deserialize(data)
-    }
-}
+impl Deserialize<(String, &dyn KeyChain, ChainPath<'_>), Error> for PubKey {
+    fn deserialize(data: (String, &dyn KeyChain, ChainPath)) -> Result<PubKey, Error> {
+        let buf = data.0[44..]
+            .from_base58()
+            .map_err(|_| Error::InvalidBase58)?;
 
-impl Deserialize<Vec<u8>, Error> for PubKey {
-    fn deserialize(data: Vec<u8>) -> Result<PubKey, Error> {
-        let derivation = decode_derivation(&data)?;
-        println!("{:?}", &data);
-        let private_key = Sk::from_bytes(&data[42..74])?;
-        let public_key = PublicKey::from(&private_key);
+        let derivation = decode_derivation((&buf, data.1, data.2))?;
+
+        let public_key = PublicKey::from_bytes(&buf[9..41]).unwrap();
 
         Ok(PubKey {
             derivation,
@@ -187,18 +186,11 @@ impl Deserialize<Vec<u8>, Error> for PubKey {
     }
 }
 
-impl Deserialize<String, Error> for PubKey {
-    fn deserialize(data: String) -> Result<PubKey, Error> {
-        let data = data.from_base58().map_err(|_| Error::InvalidBase58)?;
-        PubKey::deserialize(data)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::mnemonic;
-    use crate::{traits::Serialize};
+    use crate::traits::Serialize;
     use key_chain::{DefaultKeyChain, KeyChain};
 
     #[test]
@@ -209,13 +201,14 @@ mod tests {
             DefaultKeyChain::new(SolanaExPrivateKey::new_master_key(&seed).expect("master key"));
         let (extended_key, derivation) =
             key_chain.derive_private_key("m".into()).expect("fetch key");
-        let key = PrivKey {
+        let private_key = PrivKey {
             derivation,
             extended_key,
         };
-        let serialized_key: String = key.serialize();
-        let key2 = PrivKey::deserialize(serialized_key).expect("deserialize");
-        assert_eq!(key, key2);
+        let serialized_key: String = private_key.serialize();
+        let deserialized_key =
+            PrivKey::deserialize((serialized_key, &key_chain, "m".into())).expect("deserialize");
+        assert_eq!(private_key, deserialized_key);
     }
 
     #[test]
@@ -232,7 +225,8 @@ mod tests {
         };
         let public_key = PubKey::from_private_key(&private_key);
         let serialized_key: String = public_key.serialize();
-        let deserialized_key = PubKey::deserialize(serialized_key).expect("deserialize");
+        let deserialized_key =
+            PubKey::deserialize((serialized_key, &key_chain, "m".into())).expect("deserialize");
         assert_eq!(public_key, deserialized_key);
     }
 }
