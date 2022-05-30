@@ -41,7 +41,7 @@ impl SolanaExPrivateKey {
         let signature = {
             let signing_key = Key::new(HMAC_SHA512, b"ed25519 seed");
             let mut h = Context::with_key(&signing_key);
-            h.update(&seed);
+            h.update(seed);
             h.sign()
         };
         let sig_bytes = signature.as_ref();
@@ -49,7 +49,7 @@ impl SolanaExPrivateKey {
         let private_key = Rc::new(Sk::from_bytes(key)?);
 
         Ok(SolanaExPrivateKey {
-            private_key: private_key,
+            private_key,
             chain_code: chain_code.to_vec(),
         })
     }
@@ -75,7 +75,7 @@ impl SolanaExPrivateKey {
         let private_key = Rc::new(Sk::from_bytes(key)?);
 
         Ok(SolanaExPrivateKey {
-            private_key: private_key,
+            private_key,
             chain_code: chain_code.to_vec(),
         })
     }
@@ -91,9 +91,7 @@ impl SolanaExPublicKey {
     }
 
     pub fn is_on_curve(bytes: &[u8]) -> bool {
-        CompressedEdwardsY::from_slice(bytes.as_ref())
-            .decompress()
-            .is_some()
+        CompressedEdwardsY::from_slice(bytes).decompress().is_some()
     }
 }
 

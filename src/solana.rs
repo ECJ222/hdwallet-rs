@@ -90,8 +90,8 @@ fn decode_derivation(data: (&dyn KeyChain, ChainPath)) -> Result<Derivation, Err
 
 fn encode_checksum(buf: &mut Vec<u8>) {
     let check_sum = {
-        let buf = digest::digest(&digest::SHA256, &buf);
-        digest::digest(&digest::SHA256, &buf.as_ref())
+        let buf = digest::digest(&digest::SHA256, buf);
+        digest::digest(&digest::SHA256, buf.as_ref())
     };
 
     buf.extend_from_slice(&check_sum.as_ref()[0..4]);
@@ -153,7 +153,7 @@ impl Deserialize<(String, &dyn KeyChain, ChainPath<'_>), Error> for PrivKey {
         Ok(PrivKey {
             derivation,
             extended_key: SolanaExPrivateKey {
-                private_key: private_key,
+                 private_key,
                 chain_code,
             },
         })

@@ -90,7 +90,8 @@ mod tests {
     use base58::ToBase58;
 
     fn from_hex(hex_string: &str) -> Vec<u8> {
-        if hex_string.starts_with("0x") {
+        let strip_prefix = hex_string.starts_with("0x");
+        if strip_prefix {
             hex::decode(&hex_string[2..]).expect("decode")
         } else {
             hex::decode(hex_string).expect("decode")
@@ -142,7 +143,7 @@ mod tests {
                 .derive_private_key(ChainPath::from(*chain_path))
                 .expect("fetch key");
             let priv_key = PrivKey {
-                derivation: derivation,
+                derivation,
                 extended_key: key,
             };
 
