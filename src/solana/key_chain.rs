@@ -87,6 +87,7 @@ impl KeyChain for DefaultKeyChain {
 mod tests {
     use super::*;
     use crate::{solana::PrivKey, solana::PubKey, traits::Serialize};
+    use base58::ToBase58;
 
     fn from_hex(hex_string: &str) -> Vec<u8> {
         if hex_string.starts_with("0x") {
@@ -145,12 +146,15 @@ mod tests {
                 extended_key: key,
             };
 
+            let pub_key = PubKey::from_private_key(&priv_key);
+
             assert_eq!(
                 to_hex(priv_key.extended_key.private_key.to_bytes().to_vec()),
                 *hex_priv_key
             );
+
             assert_eq!(
-                &Serialize::<String>::serialize(&PubKey::from_private_key(&priv_key)),
+                &Serialize::<Vec<u8>>::serialize(&pub_key.extended_key).to_base58(),
                 hex_pub_key
             );
         }
