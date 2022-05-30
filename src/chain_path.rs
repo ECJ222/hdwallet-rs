@@ -1,6 +1,6 @@
 use crate::KeyIndex;
-use std::fmt;
 use std::borrow::Cow;
+use std::fmt;
 
 const MASTER_SYMBOL: &str = "m";
 const HARDENED_SYMBOLS: [&str; 2] = ["H", "'"];
@@ -15,11 +15,14 @@ pub enum Error {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChainPath<'a> {
-    path: Cow<'a, str>
+    path: Cow<'a, str>,
 }
 
 impl<'a> ChainPath<'a> {
-    pub fn new<S>(path: S) -> Self where S: Into<Cow<'a, str>> {
+    pub fn new<S>(path: S) -> Self
+    where
+        S: Into<Cow<'a, str>>,
+    {
         Self { path: path.into() }
     }
 

@@ -1,5 +1,5 @@
-use bip0039::{Count, Language, Mnemonic};
 use crate::error::Error;
+use bip0039::{Count, Language, Mnemonic};
 
 /// Generate mnemonic.
 pub fn new_mnemonic(length: u32, language_of_choice: &str) -> Result<Mnemonic, Error> {
@@ -27,5 +27,5 @@ pub fn new_mnemonic(length: u32, language_of_choice: &str) -> Result<Mnemonic, E
 
 /// Generate seed phrase.
 pub fn new_seed(mnemonic: Mnemonic, password: String) -> [u8; 64] {
-     mnemonic.to_seed(password)
+    mnemonic.to_seed(password)
 }

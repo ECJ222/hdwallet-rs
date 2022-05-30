@@ -10,7 +10,7 @@ pub enum Error {
     KeyIndexOutOfRange,
     /// ChainPathError
     ChainPath(ChainPathError),
-    EdDsa(ed25519_dalek::ed25519::Error)
+    EdDsa(ed25519_dalek::ed25519::Error),
 }
 
 impl From<ChainPathError> for Error {

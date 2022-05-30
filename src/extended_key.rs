@@ -13,7 +13,7 @@ use ring::hmac::{Context, Key, HMAC_SHA512};
 use std::rc::Rc;
 
 /// Random entropy, part of extended key.
-/// 
+///
 type ChainCode = Vec<u8>;
 
 /// Extended Private Key implementation based on the EdDSA Curve
@@ -90,7 +90,7 @@ impl SolanaExPublicKey {
         Ok(SolanaExPublicKey(public_key))
     }
 
-   pub fn is_on_curve(bytes: &[u8]) -> bool {
+    pub fn is_on_curve(bytes: &[u8]) -> bool {
         CompressedEdwardsY::from_slice(bytes.as_ref())
             .decompress()
             .is_some()
@@ -125,7 +125,7 @@ impl Serialize<Vec<u8>> for SolanaExPublicKey {
 impl Deserialize<&[u8], Error> for SolanaExPublicKey {
     fn deserialize(data: &[u8]) -> Result<Self, Error> {
         let public_key = Pk::from_bytes(&data[..32]).unwrap();
-        
+
         Ok(SolanaExPublicKey(public_key))
     }
 }
@@ -133,10 +133,10 @@ impl Deserialize<&[u8], Error> for SolanaExPublicKey {
 #[cfg(test)]
 mod tests {
     use crate::error::Error;
-    use crate::{SolanaExPrivateKey, SolanaExPublicKey, KeyIndex, mnemonic};
     use crate::traits::{Deserialize, Serialize};
+    use crate::{mnemonic, KeyIndex, SolanaExPrivateKey, SolanaExPublicKey};
 
-    fn get_solana_extended_key () -> Result<SolanaExPrivateKey, Error> {
+    fn get_solana_extended_key() -> Result<SolanaExPrivateKey, Error> {
         let seed_phrase = mnemonic::new_mnemonic(24, "English");
         let seed = mnemonic::new_seed(seed_phrase.unwrap(), "".to_string());
 
@@ -153,10 +153,12 @@ mod tests {
     }
 
     #[test]
-    fn derive_child_public_key_from_child_private_key () {
+    fn derive_child_public_key_from_child_private_key() {
         let master_key = get_solana_extended_key().unwrap();
 
-        let child_private_key = master_key.derive_private_key(KeyIndex::hardened_from_normalize_index(1).unwrap()).unwrap();
+        let child_private_key = master_key
+            .derive_private_key(KeyIndex::hardened_from_normalize_index(1).unwrap())
+            .unwrap();
 
         SolanaExPublicKey::from_private_key(&child_private_key).expect("public key");
     }
@@ -165,13 +167,20 @@ mod tests {
     fn priv_key_serialize_deserialize() {
         let master_key = get_solana_extended_key().unwrap();
         let buf = master_key.serialize();
-        assert_eq!(SolanaExPrivateKey::deserialize(&buf).expect("deserialized"), master_key);
+        assert_eq!(
+            SolanaExPrivateKey::deserialize(&buf).expect("deserialized"),
+            master_key
+        );
     }
 
     #[test]
     fn pub_key_serialize_deserialize() {
-        let master_key = SolanaExPublicKey::from_private_key(&get_solana_extended_key().unwrap()).unwrap();
+        let master_key =
+            SolanaExPublicKey::from_private_key(&get_solana_extended_key().unwrap()).unwrap();
         let buf = master_key.serialize();
-        assert_eq!(SolanaExPublicKey::deserialize(&buf).expect("deserialized"), master_key);
+        assert_eq!(
+            SolanaExPublicKey::deserialize(&buf).expect("deserialized"),
+            master_key
+        );
     }
 }

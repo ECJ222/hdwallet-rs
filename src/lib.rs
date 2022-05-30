@@ -9,10 +9,7 @@ pub mod chain_path;
 pub mod solana;
 pub mod traits;
 
-pub use crate::extended_key::{
-    key_index::KeyIndex, SolanaExPrivateKey,
-    SolanaExPublicKey,
-};
+pub use crate::extended_key::{key_index::KeyIndex, SolanaExPrivateKey, SolanaExPublicKey};
 
 pub use chain_path::{ChainPath, Error as ChainPathError, SubPath};
 
