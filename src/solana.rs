@@ -153,7 +153,7 @@ impl Deserialize<(String, &dyn KeyChain, ChainPath<'_>), Error> for PrivKey {
         Ok(PrivKey {
             derivation,
             extended_key: SolanaExPrivateKey {
-                 private_key,
+                private_key,
                 chain_code,
             },
         })
