@@ -17,7 +17,7 @@ Import crate:
 use hdwallet_rs;
 ```
 
-Note: This crate uses the [bip0039](https://github.com/koushiro/bip0039) crate for mnemonic and seed phrase generation; you can choose to generate your seed phrase from English, Japanese, Korean, Italian, French, Czech, Chinese, and Portuguese.
+Note: This crate uses the [bip0039](https://github.com/koushiro/bip0039) crate for mnemonic and seed phrase generation; you can choose to generate your mnemonic from English, Japanese, Korean, Italian, French, Czech, Chinese, and Portuguese.
 
 Generate extended key:
 
