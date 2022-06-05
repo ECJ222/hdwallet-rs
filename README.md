@@ -82,11 +82,11 @@ Note: In Solana, all key derivations are always in the hardened form, meaning ea
 
 - Bitcoin's HD wallet rust [implementation](https://github.com/jjyr/hdwallet/tree/master/src).
 
-[test-src]: https://github.com/ecj222/hdwallet-rs/actions/workflows/test.yml/badge.svg
+[test-src]: https://github.com/ECJ222/hdwallet-rs/actions/workflows/test.yml/badge.svg
 [test-href]: https://github.com/ECJ222/hdwallet-rs/blob/main/.github/workflows/test.yml
 [crate-src]: https://img.shields.io/crates/v/hdwallet-rs
 [crate-href]: https://crates.io/crates/hdwallet-rs
 [license-src]: https://img.shields.io/badge/License-MIT-blue.svg
-[license-href]: https://github.com/ecj222/hdwallet-rs/blob/main/LICENSE
-[contributors-src]: https://img.shields.io/github/contributors/ecj222/hdwallet-rs
+[license-href]: https://github.com/ECJ222/hdwallet-rs/blob/main/LICENSE
+[contributors-src]: https://img.shields.io/github/contributors/ECJ222/hdwallet-rs
 [contributors-href]: https://github.com/TribecaHQ/tribeca/graphs/contributors
