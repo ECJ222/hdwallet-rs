@@ -9,7 +9,7 @@ repository = "https://github.com/ECJ222/hdwallet-rs"
 readme = "README.md"
 keywords = ["crypto", "web3", "payment", "hdwallet"]
 categories = ["cryptography::cryptocurrencies"]
-authors = ["ENOCH <enochchejieh@gmail.com>"]
+authors = ["ENOCH <enochchejieh@gmail.com>", "JIBRIL <Gupajibril@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
