@@ -7,6 +7,7 @@ pub mod mnemonic;
 
 pub mod chain_path;
 pub mod solana;
+pub mod ethereum;
 pub mod traits;
 
 pub use crate::extended_key::{key_index::KeyIndex, SolanaExPrivateKey, SolanaExPublicKey};
