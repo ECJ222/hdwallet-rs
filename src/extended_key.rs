@@ -128,6 +128,116 @@ impl Deserialize<&[u8], Error> for SolanaExPublicKey {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct EthereumExPrivateKey {
+    pub private_key: Rc<Sk>,
+    pub chain_code: ChainCode,
+}
+
+impl Eq for EthereumExPrivateKey {}
+
+impl PartialEq for EthereumExPrivateKey {
+    fn eq(&self, other: &Self) -> bool {
+        self.private_key.as_bytes() == other.private_key.as_bytes()
+            && self.chain_code == other.chain_code
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EthereumExPublicKey(pub Pk);
+
+impl EthereumExPrivateKey {
+    pub fn new_master_key(seed: &[u8]) -> Result<EthereumExPrivateKey, Error> {
+        let signature = {
+            let signing_key = Key::new(HMAC_SHA512, b"ed25519 seed");
+            let mut h = Context::with_key(&signing_key);
+            h.update(seed);
+            h.sign()
+        };
+        let sig_bytes = signature.as_ref();
+        let (key, chain_code) = sig_bytes.split_at(sig_bytes.len() / 2);
+        let private_key = Rc::new(Sk::from_bytes(key)?);
+
+        Ok(EthereumExPrivateKey {
+            private_key,
+            chain_code: chain_code.to_vec(),
+        })
+    }
+
+    fn sign_hardended_key(&self, index: u32) -> ring::hmac::Tag {
+        let signing_key = Key::new(HMAC_SHA512, &self.chain_code);
+        let mut h = Context::with_key(&signing_key);
+        h.update(&[0x00]);
+        h.update(&self.private_key.to_bytes());
+        h.update(&index.to_be_bytes());
+        h.sign()
+    }
+
+    pub fn derive_private_key(&self, key_index: KeyIndex) -> Result<EthereumExPrivateKey, Error> {
+        if !key_index.is_valid() {
+            return Err(Error::KeyIndexOutOfRange);
+        }
+
+        let signature = self.sign_hardended_key(key_index.raw_index());
+
+        let sig_bytes = signature.as_ref();
+        let (key, chain_code) = sig_bytes.split_at(sig_bytes.len() / 2);
+        let private_key = Rc::new(Sk::from_bytes(key)?);
+
+        Ok(EthereumExPrivateKey {
+            private_key,
+            chain_code: chain_code.to_vec(),
+        })
+    }
+}
+
+impl EthereumExPublicKey {
+    pub fn from_private_key(extended_key: &EthereumExPrivateKey) -> Result<EthereumExPublicKey, Error> {
+        let private_key = Rc::try_unwrap(Rc::clone(&extended_key.private_key)).unwrap_err();
+
+        let public_key = Pk::from(&*private_key);
+
+        Ok(EthereumExPublicKey(public_key))
+    }
+
+    pub fn is_on_curve(bytes: &[u8]) -> bool {
+        CompressedEdwardsY::from_slice(bytes).decompress().is_some()
+    }
+}
+
+impl Serialize<Vec<u8>> for EthereumExPrivateKey {
+    fn serialize(&self) -> Vec<u8> {
+        let mut buf = self.private_key.to_bytes().to_vec();
+        buf.extend(&self.chain_code);
+        buf
+    }
+}
+
+impl Deserialize<&[u8], Error> for EthereumExPrivateKey {
+    fn deserialize(data: &[u8]) -> Result<Self, Error> {
+        let private_key = Sk::from_bytes(&data[..32])?;
+        let chain_code = data[32..].to_vec();
+        Ok(EthereumExPrivateKey {
+            private_key: Rc::new(private_key),
+            chain_code,
+        })
+    }
+}
+
+impl Serialize<Vec<u8>> for EthereumExPublicKey {
+    fn serialize(&self) -> Vec<u8> {
+        self.0.to_bytes().to_vec()
+    }
+}
+
+impl Deserialize<&[u8], Error> for EthereumExPublicKey {
+    fn deserialize(data: &[u8]) -> Result<Self, Error> {
+        let public_key = Pk::from_bytes(&data[..32]).unwrap();
+
+        Ok(EthereumExPublicKey(public_key))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::error::Error;
